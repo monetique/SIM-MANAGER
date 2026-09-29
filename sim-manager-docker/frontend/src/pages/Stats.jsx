@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
-import { Chart, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler } from 'chart.js'
+import { Chart, CategoryScale, LinearScale, LogarithmicScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
 import { PageHeader, OpBadge, Spinner, EmptyState } from '../components/ui'
 import api, { fmtDate } from '../lib/api'
 import { useToastStore } from '../store'
 
-Chart.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler)
+Chart.register(CategoryScale, LinearScale, LogarithmicScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler)
 
 const OP_COLORS = { 'Tunisie Telecom':'#006bb6','Orange Telecom':'#ff7900','Ooredoo':'#e4002b' }
 const MONTHS    = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
@@ -88,7 +88,7 @@ export default function Stats() {
     plugins: { legend: { position: 'top', labels: { color: 'var(--text-muted)', font:{ size:11 } } } },
     scales: {
       x: { ticks: { color:'var(--text-muted)' }, grid: { color:'var(--border)' } },
-      y: { beginAtZero:true, ticks: { color:'var(--text-muted)' }, grid: { color:'var(--border)' } }
+      y: { type:'logarithmic', min:1, ticks: { color:'var(--text-muted)' }, grid: { color:'var(--border)' } }
     }
   }
 
@@ -171,12 +171,14 @@ export default function Stats() {
               <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 20px', minWidth:150 }}>
                 <div style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--text-muted)', marginBottom:4 }}>Total SIM</div>
                 <div style={{ fontFamily:'Space Mono,monospace', fontSize:28, fontWeight:800, color:'var(--accent)' }}>{detailData.totaux.total_sims}</div>
+                <div style={{ fontSize:11, color:'#22c55e', marginTop:4 }}>● {detailData.simActuelles?.total ?? '—'} actives</div>
               </div>
               {Object.entries(detailData.parOperateur).map(([op, d]) => (
                 <div key={op} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:10, padding:'12px 20px', minWidth:150 }}>
                   <div style={{ marginBottom:6 }}><OpBadge op={op} /></div>
                   <div style={{ fontFamily:'Space Mono,monospace', fontSize:22, fontWeight:700, color:'var(--text)' }}>{d.sims}</div>
                   <div style={{ fontSize:11, color:'var(--text-muted)' }}>{d.livraisons} livraison(s)</div>
+                  <div style={{ fontSize:11, color:'#22c55e', marginTop:4 }}>● {detailData.simActuelles?.parOperateur?.[op] ?? 0} actives</div>
                 </div>
               ))}
             </div>
@@ -286,7 +288,7 @@ export default function Stats() {
                       <th style={{ textAlign:'center' }}>Total</th>
                     </tr></thead>
                     <tbody>
-                      {moisOrder.map(mois => {
+                      {[...moisOrder].reverse().map(mois => {
                         const m = moisMap[mois]
                         const clientKeys = Object.keys(m.clients)
                         const moisTotals = {}
